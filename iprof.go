@@ -1,3 +1,4 @@
+// Package iprof provides methods for global instrumented profiling.
 package iprof
 
 import (
@@ -43,6 +44,9 @@ func init() {
 	}()
 }
 
+// Start indicates the start of a new timed section.
+// The returned function should be called when the section ends.
+// Start may be called by multiple concurrent goroutines.
 func Start(section string) func() {
 	start := time.Now()
 	return func() {
@@ -51,10 +55,17 @@ func Start(section string) func() {
 	}
 }
 
+// Log allows the direct recording of timing information for a section.
+// Under most circumstances, Start should be used instead.
+// Log may be called by multiple concurrent goroutines.
 func Log(section string, duration time.Duration, end time.Time) {
 	profs <- nreading{reading{duration, end}, section}
 }
 
+// SetWindow sets the window sampling size for a section.
+// The default window size is 5000 samples, after which the oldest sample will
+// be expired when a new sample is recorded.
+// SetWindow should be called before Start or Log.
 func SetWindow(section string, window uint) {
 	wsize[section] = window
 }
@@ -71,6 +82,9 @@ func (s durationSlice) Less(i, j int) bool {
 	return s[i] < s[j]
 }
 
+// Stat returns aggregated timing information about a section.
+// It returns the average time spent in the section in milliseconds, as well as
+// a function for computing the Nth percentile of the section's samples.
 func Stat(section string) (average float64, percentile func(float64) float64) {
 	total := float64(0)
 	vals := make(durationSlice, len(stats[section]))
