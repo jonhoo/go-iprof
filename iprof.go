@@ -114,3 +114,17 @@ func Stat(section string) (average float64, percentile func(float64) float64) {
 
 	return
 }
+
+type Profile struct {
+	Average    float64
+	Percentile func(float64) float64
+}
+
+func Stats() map[string]Profile {
+	ret := make(map[string]Profile)
+	for section := range stats {
+		a, p := Stat(section)
+		ret[section] = Profile{a, p}
+	}
+	return ret
+}
