@@ -54,7 +54,9 @@ func Start(section string) func() {
 	start := time.Now()
 	return func() {
 		end := time.Now()
-		profs <- nreading{reading{end.Sub(start), end}, section}
+		go func() {
+			profs <- nreading{reading{end.Sub(start), end}, section}
+		}()
 	}
 }
 
