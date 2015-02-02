@@ -50,13 +50,15 @@ func init() {
 // Start indicates the start of a new timed section.
 // The returned function should be called when the section ends.
 // Start may be called by multiple concurrent goroutines.
-func Start(section string) func() {
+func Start(section string) func() time.Duration {
 	start := time.Now()
-	return func() {
+	return func() time.Duration {
 		end := time.Now()
+		d := end.Sub(start)
 		go func() {
-			profs <- nreading{reading{end.Sub(start), end}, section}
+			profs <- nreading{reading{d, end}, section}
 		}()
+		return d
 	}
 }
 
