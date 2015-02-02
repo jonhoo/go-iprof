@@ -15,7 +15,8 @@ func TestSimplejson(t *testing.T) {
 		Log("test", time.Duration(i)*time.Millisecond, now)
 	}
 
-	avg, perc := Stat("test")
+	c, avg, perc := Stat("test")
+	assert.Equal(t, uint(80000/4), c)
 	assert.Equal(t, 69998, avg)
 	assert.Equal(t, 79004, math.Ceil(perc(95)))
 	assert.Equal(t, 79804, math.Ceil(perc(99)))
@@ -24,6 +25,7 @@ func TestSimplejson(t *testing.T) {
 	ps := Stats()
 	p, ok := ps["test"]
 	if assert.True(t, ok) {
+		assert.Equal(t, uint(80000/4), p.Count)
 		assert.Equal(t, 69998, p.Average)
 		assert.Equal(t, 79004, math.Ceil(p.Percentile(95)))
 		assert.Equal(t, 79804, math.Ceil(p.Percentile(99)))

@@ -21,11 +21,13 @@ type nreading struct {
 
 var profs chan nreading
 var stats map[string][]reading
+var count map[string]uint
 var wsize map[string]uint
 
 func init() {
 	stats = make(map[string][]reading)
 	wsize = make(map[string]uint)
+	count = make(map[string]uint)
 	profs = make(chan nreading)
 	go func() {
 		for r := range profs {
@@ -40,6 +42,7 @@ func init() {
 			} else {
 				stats[r.section] = append(stats[r.section], r.reading)
 			}
+			count[r.section]++
 		}
 	}()
 }
@@ -85,7 +88,7 @@ func (s durationSlice) Less(i, j int) bool {
 // Stat returns aggregated timing information about a section.
 // It returns the average time spent in the section in milliseconds, as well as
 // a function for computing the Nth percentile of the section's samples.
-func Stat(section string) (average float64, percentile func(float64) float64) {
+func Stat(section string) (num uint, average float64, percentile func(float64) float64) {
 	total := float64(0)
 	vals := make(durationSlice, len(stats[section]))
 	for i, r := range stats[section] {
@@ -94,6 +97,7 @@ func Stat(section string) (average float64, percentile func(float64) float64) {
 		total += v
 	}
 
+	num = count[section]
 	length := uint(len(vals))
 	average = total / float64(length)
 
@@ -116,6 +120,7 @@ func Stat(section string) (average float64, percentile func(float64) float64) {
 }
 
 type Profile struct {
+	Count      uint
 	Average    float64
 	Percentile func(float64) float64
 }
@@ -123,8 +128,8 @@ type Profile struct {
 func Stats() map[string]Profile {
 	ret := make(map[string]Profile)
 	for section := range stats {
-		a, p := Stat(section)
-		ret[section] = Profile{a, p}
+		c, a, p := Stat(section)
+		ret[section] = Profile{c, a, p}
 	}
 	return ret
 }
