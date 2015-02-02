@@ -4,3 +4,5 @@ information about where an application is spending its time, without
 resorting to the low-level data provided by pprof. Instrumenting the
 code for profiling also allows more insight into time spent in external
 code, which pprof does not currently handle well.
+
+Inspired by https://github.com/mreiferson/go-stat
