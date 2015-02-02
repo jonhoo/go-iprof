@@ -94,10 +94,10 @@ func (s durationSlice) Less(i, j int) bool {
 // a function for computing the Nth percentile of the section's samples.
 func Stat(section string) (num uint, average float64, percentile func(float64) float64) {
 	total := float64(0)
-	vals := make(durationSlice, len(stats[section]))
-	for i, r := range stats[section] {
+	vals := make(durationSlice, 0, len(stats[section]))
+	for _, r := range stats[section] {
 		v := r.duration.Seconds() * 1000
-		vals[i] = v
+		vals = append(vals, v)
 		total += v
 	}
 
