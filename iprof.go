@@ -104,7 +104,7 @@ func Stat(section string) (average float64, percentile func(float64) float64) {
 		if k == 0 {
 			return vals[0]
 		}
-		if k >= length {
+		if k >= length-1 {
 			return vals[length-1]
 		}
 
