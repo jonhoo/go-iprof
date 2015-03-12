@@ -4,6 +4,7 @@ package iprof
 import (
 	"math"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type nreading struct {
 }
 
 var profs chan nreading
+var rw sync.RWMutex
 var stats map[string][]reading
 var count map[string]uint
 var wsize map[string]uint
@@ -31,6 +33,7 @@ func init() {
 	profs = make(chan nreading)
 	go func() {
 		for r := range profs {
+			rw.Lock()
 			l := uint(len(stats[r.section]))
 			w, ok := wsize[r.section]
 			if !ok {
@@ -43,6 +46,7 @@ func init() {
 				stats[r.section] = append(stats[r.section], r.reading)
 			}
 			count[r.section]++
+			rw.Unlock()
 		}
 	}()
 }
@@ -93,6 +97,7 @@ func (s durationSlice) Less(i, j int) bool {
 // It returns the average time spent in the section in milliseconds, as well as
 // a function for computing the Nth percentile of the section's samples.
 func Stat(section string) (num uint, average float64, percentile func(float64) float64) {
+	rw.RLock()
 	total := float64(0)
 	vals := make(durationSlice, 0, len(stats[section]))
 	for _, r := range stats[section] {
@@ -100,8 +105,9 @@ func Stat(section string) (num uint, average float64, percentile func(float64) f
 		vals = append(vals, v)
 		total += v
 	}
-
 	num = count[section]
+	rw.RUnlock()
+
 	length := uint(len(vals))
 	average = total / float64(length)
 
@@ -130,6 +136,8 @@ type Profile struct {
 }
 
 func Stats() map[string]Profile {
+	rw.RLock()
+	defer rw.RUnlock()
 	ret := make(map[string]Profile)
 	for section := range stats {
 		c, a, p := Stat(section)
